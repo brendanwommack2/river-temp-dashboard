@@ -3,7 +3,7 @@ toc: false
 ---
 
 ```js
-const raw = await FileAttachment("data/rm10_daily.csv").text();
+const raw = await FileAttachment("./data/RM10_water_temp.csv").text();
 const parsed = d3.csvParse(raw, d => ({
   date: d3.timeParse("%Y-%m-%d")(d.date),
   tmp: d.tmp === "" ? null : +d.tmp,
