@@ -101,8 +101,8 @@ display(htl.html`
 <header class="site-header">
   <img src="${logo}" alt="Grand Canyon Trust" class="site-logo">
   <nav class="site-nav">
-    <a href="/">Overview</a>
-    <a href="/2026">2026 Season</a>
+    <a href="./">Overview</a>
+    <a href="./2026">2026 Season</a>
   </nav>
 </header>
 `);
