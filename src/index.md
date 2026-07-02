@@ -297,22 +297,44 @@ const chartPlot = resize((width) => Plot.plot({
         strokeWidth: isFocus ? 2.2 : 1.0,
         strokeOpacity: isFocus ? 1 : 0.2,
         strokeDasharray: (yearColors[year]?.dash ?? []).join(" "),
-        tip: String(year) === focusYear || (focusYear === "All" && year === 2026),
-        title: (String(year) === focusYear || (focusYear === "All" && year === 2026))
-          ? d => `${year} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°C`
-          : null,
       });
     }) : []),
+    ...(!isHistoricalTab ? (() => {
+      const tipYear = focusYear === "All" ? 2026 : focusYear;
+      const tipRows = highlightedYearRows.find(([year]) => String(year) === String(tipYear))?.[1];
+      return tipRows ? [Plot.tip(tipRows, Plot.pointerX({
+        x: "doy", y: "tmp",
+        title: d => `${tipYear} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°C`,
+      }))] : [];
+    })() : []),
     ...(!isHistoricalTab ? [Plot.text(
-      highlightedYearRows
-        .filter(([year]) => focusYear === "All" || String(year) === focusYear)
-        .map(([year, rows]) => {
-          const peak = rows.reduce((a, b) => b.tmp > a.tmp ? b : a);
-          return { doy: peak.doy, tmp: peak.tmp + 0.4, label: String(year) };
-        }),
+      (() => {
+        const peaks = highlightedYearRows
+          .filter(([year]) => focusYear === "All" || String(year) === focusYear)
+          .map(([year, rows]) => {
+            const peak = rows.reduce((a, b) => b.tmp > a.tmp ? b : a);
+            return { doy: peak.doy, tmp: peak.tmp, label: String(year) };
+          })
+          .sort((a, b) => a.doy - b.doy);
+
+        // Nudge labels apart vertically when they're close in both x and y
+        const minGap = 0.7;
+        const xWindow = 25;
+        for (let i = 1; i < peaks.length; i++) {
+          for (let j = 0; j < i; j++) {
+            if (Math.abs(peaks[i].doy - peaks[j].doy) < xWindow &&
+                Math.abs(peaks[i].tmp - peaks[j].tmp) < minGap) {
+              peaks[i].tmp = peaks[j].tmp + minGap;
+            }
+          }
+        }
+
+        return peaks.map(p => ({...p, tmp: p.tmp + 0.4}));
+      })(),
       {
-        x: "doy", y: "tmp", text: "label", fontSize: 11,
+        x: "doy", y: "tmp", text: "label", fontSize: 12, fontWeight: 300,
         fill: d => yearColors[+d.label]?.color ?? "#2C0E09",
+        stroke: "#FEECD8", strokeWidth: 3, paintOrder: "stroke",
       }
     )] : []),
     ...(focusYear === "All" || focusYear === "2026" ? [Plot.dot(data2026.slice(-1), {
@@ -430,7 +452,7 @@ display(htl.html`<p class="page-footer">Colorado River at River Mile 10 · PLACE
 
 /* ── Page background ── */
 body, .observablehq--root {
-  background: #EDD7CC !important;
+  background: #DADFD5 !important;
 }
 
 /* ── Site header ── */
