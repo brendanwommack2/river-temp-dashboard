@@ -299,14 +299,6 @@ const chartPlot = resize((width) => Plot.plot({
         strokeDasharray: (yearColors[year]?.dash ?? []).join(" "),
       });
     }) : []),
-    ...(!isHistoricalTab ? (() => {
-      const tipYear = focusYear === "All" ? 2026 : focusYear;
-      const tipRows = highlightedYearRows.find(([year]) => String(year) === String(tipYear))?.[1];
-      return tipRows ? [Plot.tip(tipRows, Plot.pointerX({
-        x: "doy", y: "tmp",
-        title: d => `${tipYear} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°C`,
-      }))] : [];
-    })() : []),
     ...(!isHistoricalTab ? [Plot.text(
       (() => {
         const peaks = highlightedYearRows
@@ -341,6 +333,14 @@ const chartPlot = resize((width) => Plot.plot({
   x: "doy", y: "tmp",
   r: 5, fill: "#F7941E", stroke: "#EDD7CC", strokeWidth: 1.5,
 })] : []),
+    ...(!isHistoricalTab ? (() => {
+      const tipYear = focusYear === "All" ? 2026 : focusYear;
+      const tipRows = highlightedYearRows.find(([year]) => String(year) === String(tipYear))?.[1];
+      return tipRows ? [Plot.tip(tipRows, Plot.pointerX({
+        x: "doy", y: "tmp",
+        title: d => `${tipYear} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°C`,
+      }))] : [];
+    })() : []),
   ],
 }));
 display(htl.html`<div class="chart-card">${chartPlot}</div>`);
@@ -437,7 +437,8 @@ const legendEntries = [
   const blob = new Blob([combined], {type: "image/svg+xml"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `mile-10-temp-${focusYear.toLowerCase()}.svg`;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  a.download = `mile-10-temp-${focusYear.toLowerCase()}-${todayStr}.svg`;
   a.click();
 };
 display(exportBtn);
