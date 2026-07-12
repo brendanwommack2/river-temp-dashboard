@@ -82,14 +82,29 @@ const prior7 = data2026.slice(-14, -7);
 const last7Avg = d3.mean(last7, d => d.tmp);
 const prior7Avg = d3.mean(prior7, d => d.tmp);
 const trendDelta = (prior7.length && last7.length) ? last7Avg - prior7Avg : null;
-const trendDirection = trendDelta === null ? "flat" : trendDelta > 0.15 ? "rising" : trendDelta < -0.15 ? "falling" : "steady";
-const trendArrow = trendDirection === "rising" ? "↑" : trendDirection === "falling" ? "↓" : "→";
-const trendColor = trendDirection === "rising" ? "#B03823" : trendDirection === "falling" ? "#537F1C" : "#705C57";
-const trendSub = trendDirection === "rising" ? "Warming vs. prior week" : trendDirection === "falling" ? "Cooling vs. prior week" : "Holding steady";
+const trendDirection = trendDelta === null ? "flat" :
+                       trendDelta > 0.15 ? "rising" :
+                       trendDelta < -0.15 ? "falling" :
+                       "steady";
+const trendArrow = trendDirection === "rising" ? "↑" :
+                   trendDirection === "falling" ? "↓" :
+                   "→";
+const trendColor = trendDirection === "rising" ? "#B03823" :
+                   trendDirection === "falling" ? "#537F1C" :
+                   "#705C57";
+const trendSub = trendDirection === "rising" ? "Warming vs. prior week" :
+                 trendDirection === "falling" ? "Cooling vs. prior week" :
+                 "Holding steady";
 
-const status = currentTemp >= threshold ? "above" : currentTemp >= threshold - 1 ? "approaching" : "below";
-const statusColor = status === "above" ? "#ca3f26" : status === "approaching" ? "#F7941E" : "#537F1C";
-const statusLabel = status === "above" ? "Threshold Exceeded" : status === "approaching" ? "Approaching threshold" : "Below threshold";
+const status = currentTemp >= threshold ? "above" :
+               currentTemp >= threshold - 1 ? "approaching" :
+               "below";
+const statusColor = status === "above" ? "#ca3f26" :
+                    status === "approaching" ? "#F7941E" :
+                    "#537F1C";
+const statusLabel = status === "above" ? "Threshold Exceeded" :
+                    status === "approaching" ? "Approaching threshold" :
+                    "Below threshold";
 const lastUpdated = d3.max(parsed.filter(d => d.date !== null), d => d.date);
 const lastUpdatedStr = lastUpdated
   ? lastUpdated.toLocaleDateString("en-US", {year: "numeric", month: "long", day: "numeric"})

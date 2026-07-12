@@ -135,3 +135,6 @@ DAT[, tmp := f(date, tmp, cfs)]
 
 ## Write results to stdout (as required for an Observable Framework data loader)
 cat(format_csv(DAT, na = ""))
+
+## Manually write to file, solely for testing purposes
+## fwrite(DAT, "RM10_water_temp.6377a3bf.csv", na = "")
