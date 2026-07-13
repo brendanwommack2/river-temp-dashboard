@@ -2,7 +2,7 @@
 toc: false
 ---
 
-<link rel="stylesheet" href="./styles/index.css">
+<link rel="stylesheet" href="./styles/App.css">
 
 ```js
 const raw = await FileAttachment("./data/RM10_water_temp.csv").text();
