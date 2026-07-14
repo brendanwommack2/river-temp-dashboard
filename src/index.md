@@ -5,6 +5,23 @@ toc: false
 <link rel="stylesheet" href="./styles/App.css">
 
 ```js
+// ── Season configuration ─────────────────────────────────────────
+// Change ONLY this value to move the whole page to a new season.
+// (The chart highlights this year plus the 4 years before it, using
+// the color/dash palette below. Add a 6th palette entry if you ever
+// want to show more than 5 highlighted years at once.)
+const currentYear = 2026;
+
+const yearPalette = [
+  {color: "#3987e5", dash: [6,2]},
+  {color: "#9085e9", dash: [4,2]},
+  {color: "#eda100", dash: []},
+  {color: "#e34948", dash: [2,2]},
+  {color: "#1baf7a", dash: [8,3]},
+];
+```
+
+```js
 const raw = await FileAttachment("./data/RM10_water_temp.csv").text();
 const parsed = d3.csvParse(raw, d => ({
   date: d3.timeParse("%Y-%m-%d")(d.date),
@@ -24,13 +41,11 @@ const annotated = parsed
 ```
 
 ```js
-const yearColors = {
-  2022: {color: "#3987e5", dash: [6,2]},
-  2023: {color: "#9085e9", dash: [4,2]},
-  2024: {color: "#eda100", dash: []},
-  2025: {color: "#e34948", dash: [2,2]},
-  2026: {color: "#1baf7a", dash: [8,3]},
-};
+// yearPalette[i] is paired with (currentYear - (palette.length - 1 - i)),
+// so the last palette entry always lands on currentYear.
+const yearColors = Object.fromEntries(
+  yearPalette.map((cfg, i) => [currentYear - (yearPalette.length - 1 - i), cfg])
+);
 ```
 
 ```js
@@ -56,12 +71,12 @@ const highlightedYearRows = Array.from(byYear).filter(([year]) => highlightedYea
 ```
 
 ```js
-const data2026 = annotated.filter(d => d.year === 2026).sort((a, b) => a.doy - b.doy);
-const latest = data2026[data2026.length - 1];
+const dataCurrent = annotated.filter(d => d.year === currentYear).sort((a, b) => a.doy - b.doy);
+const latest = dataCurrent[dataCurrent.length - 1];
 const currentTemp = latest?.tmp;
 const threshold = 15.5;
-const daysAbove = data2026.filter(d => d.tmp >= threshold).length;
-const lastAbove = [...data2026].reverse().find(d => d.tmp >= threshold);
+const daysAbove = dataCurrent.filter(d => d.tmp >= threshold).length;
+const lastAbove = [...dataCurrent].reverse().find(d => d.tmp >= threshold);
 const daysSinceAbove = lastAbove ? latest.doy - lastAbove.doy : null;
 
 const firstCrossingDoys = Array.from(d3.group(annotated, d => d.year), ([year, rows]) => {
@@ -73,12 +88,12 @@ const medianCrossDay = firstCrossingDoys.length ? d3.quantile(firstCrossingDoys,
 
 const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function doyToMonthDay(doy) {
-  const d = new Date(2026, 0, 1 + doy);
+  const d = new Date(currentYear, 0, 1 + doy);
   return `${monthNames[d.getMonth()]} ${d.getDate()}`;
 }
 
-const last7 = data2026.slice(-7);
-const prior7 = data2026.slice(-14, -7);
+const last7 = dataCurrent.slice(-7);
+const prior7 = dataCurrent.slice(-14, -7);
 const last7Avg = d3.mean(last7, d => d.tmp);
 const prior7Avg = d3.mean(prior7, d => d.tmp);
 const trendDelta = (prior7.length && last7.length) ? last7Avg - prior7Avg : null;
@@ -119,7 +134,7 @@ display(htl.html`
   <img src="${logo}" alt="Grand Canyon Trust" class="site-logo">
   <nav class="site-nav">
     <a href="./">Overview</a>
-    <a href="./2026">2026 Season</a>
+    <a href="./${currentYear}">${currentYear} Season</a>
   </nav>
 </header>
 `);
@@ -346,12 +361,12 @@ const chartPlot = resize((width) => Plot.plot({
         stroke: "#FEECD8", strokeWidth: 3, paintOrder: "stroke",
       }
     )] : []),
-    ...(focusYear === "All" || focusYear === "2026" ? [Plot.dot(data2026.slice(-1), {
+    ...(focusYear === "All" || focusYear === String(currentYear) ? [Plot.dot(dataCurrent.slice(-1), {
   x: "doy", y: "tmp",
   r: 5, fill: "#F7941E", stroke: "#EDD7CC", strokeWidth: 1.5,
 })] : []),
     ...(!isHistoricalTab ? (() => {
-      const tipYear = focusYear === "All" ? 2026 : focusYear;
+      const tipYear = focusYear === "All" ? currentYear : focusYear;
       const tipRows = highlightedYearRows.find(([year]) => String(year) === String(tipYear))?.[1];
       return tipRows ? [Plot.tip(tipRows, Plot.pointerX({
         x: "doy", y: "tmp",
