@@ -363,7 +363,7 @@ const chartPlot = resize((width) => Plot.plot({
     )] : []),
     ...(focusYear === "All" || focusYear === String(currentYear) ? [Plot.dot(dataCurrent.slice(-1), {
   x: "doy", y: "tmp",
-  r: 5, fill: "#F7941E", stroke: "#EDD7CC", strokeWidth: 1.5,
+  r: 5, fill: "#F7941E", stroke: "#EDD7CC", strokeWidth: 1.5, /* Current Temperature Dot*/
 })] : []),
     ...(!isHistoricalTab ? (() => {
       const tipYear = focusYear === "All" ? currentYear : focusYear;
