@@ -207,19 +207,20 @@ const focusYearEl = (() => {
 
   for (const btn of root.querySelectorAll(".pill")) {
     btn.onclick = () => {
+      const alreadySelected = btn.classList.contains("pill-selected");
+
       for (const b of root.querySelectorAll(".pill")) {
         b.classList.remove("pill-selected");
         b.setAttribute("aria-checked", "false");
       }
-      btn.classList.add("pill-selected");
-      btn.setAttribute("aria-checked", "true");
-      root.value = btn.dataset.value;
 
-      // Turn off the Historical toggle if a year/All pill is picked directly
-      const histBtn = document.querySelector('[data-value="Historical"]');
-      if (histBtn) {
-        histBtn.classList.remove("toggle-on");
-        histBtn.setAttribute("aria-checked", "false");
+      if (alreadySelected) {
+        // Clicking the active pill again turns it off — no year pill selected
+        root.value = null;
+      } else {
+        btn.classList.add("pill-selected");
+        btn.setAttribute("aria-checked", "true");
+        root.value = btn.dataset.value;
       }
 
       root.dispatchEvent(new Event("input", {bubbles: true}));
@@ -324,14 +325,14 @@ const chartPlot = resize((width) => Plot.plot({
         stroke: "#705C57", strokeWidth: 0.8, strokeOpacity: 0.35,
       })
     ) : []),
-    ...(showHistorical ? [Plot.text(
-      historicalYears.map(([year, rows]) => {
-        const peak = rows.reduce((a, b) => b.tmp > a.tmp ? b : a);
-        return { doy: peak.doy, tmp: peak.tmp + 0.5, label: String(year) };
-      }),
-      { x: "doy", y: "tmp", text: "label", fontSize: 16, fill: "#57423E" }
+    ...(showHistorical ? [Plot.tip(
+      historicalYears.flatMap(([year, rows]) => rows.map(d => ({...d, year}))),
+      Plot.pointer({
+        x: "doy", y: "tmp",
+        title: d => `${d.year} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°F`,
+      })
     )] : []),
-    ...highlightedYearRows.map(([year, rows]) => {
+    ...(focusYear ? highlightedYearRows.map(([year, rows]) => {
       const isFocus = focusYear === "All" || String(year) === focusYear;
       return Plot.line(rows, {
         x: "doy", y: "tmp",
@@ -340,8 +341,8 @@ const chartPlot = resize((width) => Plot.plot({
         strokeOpacity: isFocus ? 1 : 0.2,
         strokeDasharray: (yearColors[year]?.dash ?? []).join(" "),
       });
-    }),
-    ...[Plot.text(
+    }) : []),
+    ...(focusYear ? [Plot.text(
       (() => {
         const peaks = highlightedYearRows
           .filter(([year]) => focusYear === "All" || String(year) === focusYear)
@@ -370,19 +371,19 @@ const chartPlot = resize((width) => Plot.plot({
         fill: d => yearColors[+d.label]?.color ?? "#2C0E09",
         stroke: "#FEECD8", strokeWidth: 3, paintOrder: "stroke",
       }
-    )],
+    )] : []),
     ...(focusYear === "All" || focusYear === String(currentYear) ? [Plot.dot(dataCurrent.slice(-1), {
   x: "doy", y: "tmp",
   r: 5, fill: "#F7941E", stroke: "#EDD7CC", strokeWidth: 1.5, /* Current Temperature Dot*/
 })] : []),
-    ...(() => {
+    ...(focusYear ? (() => {
       const tipYear = focusYear === "All" ? currentYear : focusYear;
       const tipRows = highlightedYearRows.find(([year]) => String(year) === String(tipYear))?.[1];
       return tipRows ? [Plot.tip(tipRows, Plot.pointerX({
         x: "doy", y: "tmp",
         title: d => `${tipYear} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°F`,
       }))] : [];
-    })(),
+    })() : []),
   ],
 }));
 display(htl.html`<div class="chart-card">${chartPlot}</div>`);
@@ -437,11 +438,13 @@ exportBtn.onclick = () => {
   const chartHeight = chartClone.viewBox.baseVal.height || chartClone.getBoundingClientRect().height;
 
 // Build legend entries matching what's currently visible
-const visibleYearEntries = Object.entries(yearColors)
-  .filter(([year]) => focusYear === "All" || String(year) === focusYear)
-  .map(([year, cfg]) => ({
-    label: String(year), color: cfg.color, dash: cfg.dash.length ? cfg.dash.join(",") : "none", type: "line",
-  }));
+const visibleYearEntries = focusYear
+  ? Object.entries(yearColors)
+      .filter(([year]) => focusYear === "All" || String(year) === focusYear)
+      .map(([year, cfg]) => ({
+        label: String(year), color: cfg.color, dash: cfg.dash.length ? cfg.dash.join(",") : "none", type: "line",
+      }))
+  : [];
 
 const legendEntries = [
   ...visibleYearEntries,
@@ -479,7 +482,7 @@ const legendEntries = [
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   const todayStr = new Date().toISOString().slice(0, 10);
-  a.download = `mile-10-temp-${focusYear.toLowerCase()}-${todayStr}.svg`;
+  a.download = `mile-10-temp-${(focusYear ?? "none").toLowerCase()}-${todayStr}.svg`;
   a.click();
 };
 display(exportBtn);
