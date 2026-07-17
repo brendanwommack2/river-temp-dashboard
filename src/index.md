@@ -201,9 +201,9 @@ const focusYearEl = (() => {
     root.appendChild(btn);
   }
 
-  root.value = "All";
-  root.querySelector(`[data-value="All"]`).classList.add("pill-selected");
-  root.querySelector(`[data-value="All"]`).setAttribute("aria-checked", "true");
+  root.value = String(currentYear);
+  root.querySelector(`[data-value="${currentYear}"]`).classList.add("pill-selected");
+  root.querySelector(`[data-value="${currentYear}"]`).setAttribute("aria-checked", "true");
 
   for (const btn of root.querySelectorAll(".pill")) {
     btn.onclick = () => {
