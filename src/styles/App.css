@@ -7,11 +7,11 @@
 
   /* ── COLORS ─────────────────────────────────────────────── */
   /* Backgrounds */
-  --color-bg-page:        #DADFD5;  /* whole page background */
+  --color-bg-page:        #FFFFFF;  /* whole page background */
   --color-bg-card:        #FEECD8;  /* cream card background (stat cards, chart, table) */
   --color-bg-card-alt:    #FDE8D0;  /* slightly darker card shade (striped table rows) */
   --color-bg-hover:       #FDCD99;  /* table row hover */
-  --color-bg-hero:        #2C0E09;  /* dark brown hero banner */
+  --color-bg-hero:        #5591a6;  /* hero banner background */
 
   /* Text */
   --color-text-dark:      #2C0E09;  /* darkest text (numbers, headings on light bg) */
@@ -38,9 +38,9 @@
   --font-sans:   "Source Sans 3", sans-serif;         /* body copy, labels, nav */
 
   /* ── SIZES to tweak ─────────────────────────────────────── */
-  --size-hero-temp:    3rem;      /* the giant "18.6°C" number */
-  --size-hero-title:   2rem;      /* hero headline */
-  --size-stat-value:   1.55rem;   /* numbers in the 4 stat cards */
+  --size-hero-temp:    4rem;      /* the giant "18.6°F" number */
+  --size-hero-title:   45px;      /* hero headline */
+  --size-stat-value:   2rem;      /* numbers in the 4 stat cards */
 
   /* ── SHAPE ──────────────────────────────────────────────── */
   --radius-card:   4px;   /* chart card corner roundness */
@@ -53,7 +53,7 @@
 
 /* ── Page background ── */
 body, .observablehq--root {
-  background: var(--color-bg-page) !important;
+  background: #ffffff !important;
 }
 
 /* ── Site header ── */
@@ -76,7 +76,7 @@ body, .observablehq--root {
   margin-left: auto;
 }
 .site-nav a {
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--color-text-muted);
@@ -87,7 +87,7 @@ body, .observablehq--root {
 
 /* ── Hero ── */
 .hero {
-  background: var(--color-bg-hero);
+  background: #5591a6;
   padding: 1.85rem 1.75rem 1.6rem;
   margin-bottom: 1.4rem;
   position: relative;
@@ -102,21 +102,14 @@ body, .observablehq--root {
   mix-blend-mode: overlay;
   pointer-events: none;
 }
-.hero::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--color-accent-rust) 0%, var(--color-accent-orange) 50%, var(--color-accent-olive) 100%);
-}
 
 .hero-left .hero-eyebrow,
 .hero > .hero-eyebrow {
   font-family: var(--font-sans);
-  font-size: 10px;
+  font-size: 20px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: #D69D84;
+  color: #000000;
   margin: 0 0 0.4rem;
   position: relative;
 }
@@ -124,8 +117,9 @@ body, .observablehq--root {
 .hero > .hero-title {
   font-family: var(--font-serif);
   font-size: var(--size-hero-title);
+  max-width: 800px;
   font-weight: 400;
-  color: var(--color-text-hero);
+  color: #251F21;
   line-height: 1.15;
   margin: 0 0 0.4rem;
   border: none;
@@ -134,16 +128,16 @@ body, .observablehq--root {
 }
 .hero-left .hero-sub {
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 300;
-  color: #b3a9a8;
+  color: #000000d9;
   margin: 0;
 }
 .hero > .hero-sub {
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 300;
-  color: var(--color-text-hero-sub);
+  color: #000000d9;
   margin: 0;
   position: relative;
 }
@@ -166,6 +160,7 @@ body, .observablehq--root {
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.02em;
+  color: rgb(176 56 35);
 }
 .hero-temp-unit {
   font-size: 1.4rem;
@@ -174,23 +169,24 @@ body, .observablehq--root {
 }
 .hero-temp-label {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 20px;
   font-weight: 400;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   margin-top: 0.25rem;
+  color: rgb(176 56 35);
 }
 .hero-temp-date {
-  font-family: var(--font-mono);
-  font-size: 17px;
-  color: #afa9a7;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  color: #000000;
   margin-top: 0.2rem;
 }
 
 /* ── Last updated ── */
 .last-updated {
   font-family: var(--font-serif);
-  font-size: 11px;
+  font-size: 16px;
   font-style: italic;
   color: var(--color-text-faint);
   border-left: 2px solid #D69D84;
@@ -204,35 +200,35 @@ body, .observablehq--root {
   grid-template-columns: repeat(4, 1fr);
   gap: 0;
   margin: 0 0 1.75rem;
-  border: 1px solid var(--color-border);
 }
 .stat-card {
   padding: 0.9rem 1.05rem;
-  border-right: 1px solid var(--color-border);
-  background: var(--color-bg-card);
+  border-right: 1.5px solid #b3b3b3d9;
+  background: #ffffff;
   position: relative;
 }
 .stat-card:last-child { border-right: none; }
 
-.stat-card--trend     { border-top: 3px solid var(--color-accent-orange); } /* shared */
-.stat-card--days      { border-top: 3px solid var(--color-accent-rust); }   /* shared */
-.stat-card--threshold { border-top: 3px solid var(--color-accent-tan); }    /* index-only */
-.stat-card--median    { border-top: 3px solid var(--color-accent-green); }  /* index-only */
-.stat-card--temp      { border-top: 3px solid var(--color-accent-rust); }   /* 2026-only */
-.stat-card--peak       { border-top: 3px solid var(--color-accent-tan); }   /* 2026-only */
+/* top borders removed from all stat-card variants per request */
+.stat-card--trend,
+.stat-card--days,
+.stat-card--threshold,
+.stat-card--median,
+.stat-card--temp,
+.stat-card--peak { border-top: none; }
 
 /* Typography unified (index.css was ~2px larger than 2026.css) */
 .stat-label {
   font-family: var(--font-serif);
-  font-size: 12px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--color-text-faint);
+  color: #251f21d9;
   margin-bottom: 0.3rem;
 }
 .stat-value {
   font-family: var(--font-mono);
-  font-size: var(--size-stat-value);
+  font-size: 2rem;
   font-weight: 500;
   line-height: 1;
   color: var(--color-text-dark);
@@ -240,9 +236,15 @@ body, .observablehq--root {
 }
 .stat-sub {
   font-family: var(--font-sans);
-  font-size: 11.5px;
-  font-weight: 300;
-  color: var(--color-text-muted);
+  font-size: 16px;
+  font-weight: 350;
+  color: #000000d9;
+}
+
+/* Threshold text explicitly set to IBM Plex Mono */
+.stat-card--threshold .stat-label,
+.stat-card--threshold .stat-value {
+  font-family: var(--font-mono);
 }
 
 /* ── Page footer ── */
@@ -251,9 +253,14 @@ body, .observablehq--root {
   border-top: 1px solid var(--color-border);
   padding-top: 0.5rem;
   font-family: var(--font-serif);
-  font-size: 10px;
+  font-size: 16px;
   font-style: italic;
   color: var(--color-text-footer);
+}
+
+/* ── Observable block spacing (extra breathing room between blocks) ── */
+.observablehq--block {
+  margin: 2rem 0;
 }
 
 /* ────────────────────────────────────────────────────────────── */
@@ -285,20 +292,23 @@ body, .observablehq--root {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: "Source Sans 3", sans-serif;
+  font-size: 16px;
   letter-spacing: 0.02em;
-  color: var(--color-text-muted);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-pill);
+  color: #ffffff;
+  background: #9dbfcb;
+  border: 1px solid #ffffff;
+  border-radius: 5px;
   padding: 0.35rem 0.85rem;
   cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.pill:hover { border-color: var(--color-accent-rust); color: var(--color-accent-rust); }
-.pill-selected { background: var(--color-bg-hero); border-color: var(--color-bg-hero); color: var(--color-text-hero); }
-.pill-selected:hover { border-color: var(--color-bg-hero); color: var(--color-text-hero); }
+.pill:hover { border-color: #561B11; color: #561B11; }
+.pill-selected {
+  background: #B03823;
+  color: #ffffff;
+}
+.pill-selected:hover { border-color: #561B11; color: #ffffff; }
 .pill-swatch {
   width: 8px;
   height: 8px;
@@ -325,7 +335,7 @@ body, .observablehq--root {
   padding: 0;
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 12.5px;
+  font-size: 16px;
   color: var(--color-text-muted);
   white-space: nowrap;
 }
@@ -355,8 +365,8 @@ body, .observablehq--root {
 .toggle-label { letter-spacing: 0.01em; }
 
 .chart-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
+  background: #ffffff;
+  border: none;
   border-radius: var(--radius-card);
   padding: 0.75rem 0.25rem 0.5rem;
   margin-bottom: 0.5rem;
@@ -374,13 +384,13 @@ body, .observablehq--root {
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 16px;
   color: var(--color-text-faint);
 }
 
 .export-btn {
   font-family: var(--font-serif);
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   padding: 0.45rem 1.1rem;
@@ -424,7 +434,7 @@ body, .observablehq--root {
 }
 .section-card-title {
   font-family: var(--font-serif);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.14em;
@@ -435,7 +445,7 @@ body, .observablehq--root {
 }
 .section-card-sub {
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 300;
   color: var(--color-text-faint);
   margin: 0;
@@ -444,7 +454,7 @@ body, .observablehq--root {
 
 .trend-summary {
   font-family: var(--font-serif);
-  font-size: 13px;
+  font-size: 16px;
   font-style: italic;
   color: var(--color-text-muted);
   border-left: 2px solid var(--color-accent-orange);
@@ -466,7 +476,7 @@ body, .observablehq--root {
   align-items: center;
   gap: 5px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
@@ -481,7 +491,7 @@ body, .observablehq--root {
 }
 .recent-table thead th {
   font-family: var(--font-serif);
-  font-size: 10.5px;
+  font-size: 16px;
   font-weight: 400;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -496,7 +506,7 @@ body, .observablehq--root {
 }
 .recent-table tbody td {
   font-family: var(--font-sans);
-  font-size: 12.5px;
+  font-size: 16px;
   font-weight: 300;
   color: var(--color-text-body);
   padding: 0.35rem 0.9rem;
@@ -513,11 +523,11 @@ body, .observablehq--root {
 }
 .recent-table .cell-delta {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 16px;
 }
 .recent-table .cell-flow {
   font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 .recent-table tbody tr:last-child td {
@@ -550,7 +560,7 @@ body, .observablehq--root {
   .hero-content { flex-direction: column; }
   .hero-right { text-align: left; }
   .hero-temp { font-size: 2.2rem; }
-  .pill { font-size: 11px; padding: 0.3rem 0.65rem; }
+  .pill { font-size: 16px; padding: 0.3rem 0.65rem; }
   .controls-row { flex-direction: column; }
   .controls-right { border-left: none; padding-left: 0; border-top: 1px solid var(--color-border); padding-top: 0.75rem; }
   .toggle-row { gap: 1rem; flex-wrap: wrap; }

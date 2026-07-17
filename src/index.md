@@ -12,20 +12,28 @@ toc: false
 // want to show more than 5 highlighted years at once.)
 const currentYear = 2026;
 
+// Palette entries are paired with years oldest→newest (index 0 = 4 years
+// back, last index = currentYear). Colors/dashes were swapped per request:
+// 2026 <-> 2025, and 2022 <-> 2024.
 const yearPalette = [
-  {color: "#3987e5", dash: [6,2]},
-  {color: "#9085e9", dash: [4,2]},
-  {color: "#eda100", dash: []},
-  {color: "#e34948", dash: [2,2]},
-  {color: "#1baf7a", dash: [8,3]},
+  {color: "#eda100", dash: []},     // 2022 (was 2024's color/dash)
+  {color: "#9085e9", dash: [4,2]},  // 2023 (unchanged)
+  {color: "#3987e5", dash: [6,2]},  // 2024 (was 2022's color/dash)
+  {color: "#1baf7a", dash: [8,3]},  // 2025 (was 2026's color/dash)
+  {color: "#e34948", dash: [2,2]},  // 2026 (was 2025's color/dash)
 ];
+```
+
+```js
+// ── Unit conversion ───────────────────────────────────────────────
+const toF = c => c * 9 / 5 + 32;
 ```
 
 ```js
 const raw = await FileAttachment("./data/RM10_water_temp.csv").text();
 const parsed = d3.csvParse(raw, d => ({
   date: d3.timeParse("%Y-%m-%d")(d.date),
-  tmp: d.tmp === "" ? null : +d.tmp,
+  tmp: d.tmp === "" ? null : toF(+d.tmp),
   cfs: d.cfs === "" ? null : +d.cfs
 }));
 ```
@@ -74,17 +82,10 @@ const highlightedYearRows = Array.from(byYear).filter(([year]) => highlightedYea
 const dataCurrent = annotated.filter(d => d.year === currentYear).sort((a, b) => a.doy - b.doy);
 const latest = dataCurrent[dataCurrent.length - 1];
 const currentTemp = latest?.tmp;
-const threshold = 15.5;
+const threshold = toF(15.5);
 const daysAbove = dataCurrent.filter(d => d.tmp >= threshold).length;
 const lastAbove = [...dataCurrent].reverse().find(d => d.tmp >= threshold);
 const daysSinceAbove = lastAbove ? latest.doy - lastAbove.doy : null;
-
-const firstCrossingDoys = Array.from(d3.group(annotated, d => d.year), ([year, rows]) => {
-  const sorted = rows.filter(d => d.tmp !== null).sort((a, b) => a.doy - b.doy);
-  const crossing = sorted.find(d => d.doy >= 60 && d.tmp >= threshold);
-  return crossing ? crossing.doy : null;
-}).filter(d => d !== null).sort(d3.ascending);
-const medianCrossDay = firstCrossingDoys.length ? d3.quantile(firstCrossingDoys, 0.5) : null;
 
 const monthNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 function doyToMonthDay(doy) {
@@ -107,22 +108,23 @@ const trendArrow = trendDirection === "rising" ? "↑" :
 const trendColor = trendDirection === "rising" ? "#B03823" :
                    trendDirection === "falling" ? "#537F1C" :
                    "#705C57";
-const trendSub = trendDirection === "rising" ? "Warming vs. prior week" :
-                 trendDirection === "falling" ? "Cooling vs. prior week" :
-                 "Holding steady";
+const trendSub = trendDirection === "rising" ? "Warming vs. Prior Week" :
+                 trendDirection === "falling" ? "Cooling vs. Prior Week" :
+                 "Holding Steady";
+
+const daysAboveSub = daysSinceAbove === 0 ? "Currently Above" :
+                     daysSinceAbove !== null ? `Last Exceeded ${daysSinceAbove} Days Ago` :
+                     "Not Yet Exceeded";
 
 const status = currentTemp >= threshold ? "above" :
-               currentTemp >= threshold - 1 ? "approaching" :
+               currentTemp >= threshold - 1.8 ? "approaching" : // 1.8°F ≈ 1°C buffer
                "below";
-const statusColor = status === "above" ? "#ca3f26" :
-                    status === "approaching" ? "#F7941E" :
-                    "#537F1C";
 const statusLabel = status === "above" ? "Threshold Exceeded" :
-                    status === "approaching" ? "Approaching threshold" :
-                    "Below threshold";
+                    status === "approaching" ? "Approaching Threshold" :
+                    "Below Threshold";
 const lastUpdated = d3.max(parsed.filter(d => d.date !== null), d => d.date);
-const lastUpdatedStr = lastUpdated
-  ? lastUpdated.toLocaleDateString("en-US", {year: "numeric", month: "long", day: "numeric"})
+const lastUpdatedStr = latest?.date
+  ? latest.date.toLocaleDateString("en-US", {year: "numeric", month: "long", day: "numeric"})
   : "unknown";
 ```
 
@@ -145,49 +147,44 @@ display(htl.html`<div class="hero">
   <div class="hero-bg"></div>
   <div class="hero-content">
     <div class="hero-left">
-      <p class="hero-eyebrow">USGS OBSERVATIONS • DIBBLE ET AL. (2020) FRAMEWORK</p>
-      <h1 class="hero-title">Colorado River Mile 10 Temperature</h1>
+      <p class="hero-eyebrow">Colorado River Mile 10</p>
+      <h1 class="hero-title">Smallmouth Bass Spawning Threshold and Daily Water Temperature</h1>
       <p class="hero-sub">Daily water temperature and smallmouth bass spawning threshold tracking</p>
     </div>
     <div class="hero-right">
-      <div class="hero-temp" style=${{color: statusColor}}>${currentTemp?.toFixed(1)}<span class="hero-temp-unit">°C</span></div>
-      <div class="hero-temp-label" style=${{color: statusColor}}>${statusLabel}</div>
+      <div class="hero-temp">${currentTemp?.toFixed(1)}<span class="hero-temp-unit">°F</span></div>
+      <div class="hero-temp-label">${statusLabel}</div>
       <div class="hero-temp-date">${latest?.date.toLocaleDateString("en-US", {month: "short", day: "numeric"})}</div>
     </div>
   </div>
 </div>`);
 ```
 
-```js
-const header = htl.html`<p class="last-updated">Data through ${lastUpdatedStr} · USGS, preliminary</p>`;
-display(header);
-```
-
 <div class="stat-row">
+  <div class="stat-card stat-card--reading">
+    <div class="stat-label">Last Reading Date</div>
+    <div class="stat-value">${lastUpdatedStr}</div>
+    <div class="stat-sub">Most Recent USGS Reading</div>
+  </div>
   <div class="stat-card stat-card--trend">
-    <div class="stat-label">7-day trend</div>
-    <div class="stat-value" style=${{color: trendColor}}>${trendArrow} ${trendDelta !== null ? Math.abs(trendDelta).toFixed(2) : "—"}°C</div>
+    <div class="stat-label">7-day Trend</div>
+    <div class="stat-value" style=${{color: trendColor}}>${trendArrow} ${trendDelta !== null ? Math.abs(trendDelta).toFixed(2) : "—"}°F</div>
     <div class="stat-sub">${trendSub}</div>
   </div>
-  <div class="stat-card stat-card--threshold">
-    <div class="stat-label">Threshold</div>
-    <div class="stat-value">15.5°C</div>
-    <div class="stat-sub">Triggers cool mix flow release to disrupt invasive trout</div>
-  </div>
   <div class="stat-card stat-card--days">
-    <div class="stat-label">Days above threshold</div>
+    <div class="stat-label">Days Above Threshold</div>
     <div class="stat-value">${daysAbove}</div>
-    <div class="stat-sub">${daysSinceAbove === 0 ? "Currently above" : daysSinceAbove !== null ? `Last exceeded ${daysSinceAbove} days ago` : "Not yet exceeded"}</div>
+    <div class="stat-sub">${daysAboveSub}</div>
   </div>
-  <div class="stat-card stat-card--median">
-    <div class="stat-label">Historical median</div>
-    <div class="stat-value">${medianCrossDay ? doyToMonthDay(medianCrossDay) : "—"}</div>
-    <div class="stat-sub">Average date temperatures have exceed 15.5°C</div>
+  <div class="stat-card stat-card--threshold">
+    <div class="stat-label">Cool Mix Threshold</div>
+    <div class="stat-value">${threshold.toFixed(1)}°F</div>
+    <div class="stat-sub">Triggers Dam Release with Cool Mix Flows</div>
   </div>
 </div>
 
 ```js
-const yearOptions = ["All", ...Object.keys(yearColors), "Historical"];
+const yearOptions = [...Object.keys(yearColors).sort((a, b) => b - a), "All"];
 
 const focusYearEl = (() => {
   const root = htl.html`<div class="pill-group" role="radiogroup" aria-label="View"></div>`;
@@ -217,6 +214,14 @@ const focusYearEl = (() => {
       btn.classList.add("pill-selected");
       btn.setAttribute("aria-checked", "true");
       root.value = btn.dataset.value;
+
+      // Turn off the Historical toggle if a year/All pill is picked directly
+      const histBtn = document.querySelector('[data-value="Historical"]');
+      if (histBtn) {
+        histBtn.classList.remove("toggle-on");
+        histBtn.setAttribute("aria-checked", "false");
+      }
+
       root.dispatchEvent(new Event("input", {bubbles: true}));
     };
   }
@@ -257,14 +262,19 @@ const showBand = view(bandToggleEl);
 ```
 
 ```js
-display(htl.html`<div class="controls-row">
-  <div class="controls-left">${focusYearEl}</div>
-  <div class="controls-right toggle-row">${medianToggleEl}${bandToggleEl}</div>
-</div>`);
+// "Historical" moved out of the main pill-group and into the toggle row,
+// styled to match the median/band toggle switches it's grouped with.
+// It's now an independent overlay: turning it on/off doesn't touch and
+// isn't touched by whichever year pill is currently selected.
+const historicalToggleEl = pillToggle("Historical", false);
+const showHistorical = view(historicalToggleEl);
 ```
 
 ```js
-const isHistoricalTab = focusYear === "Historical";
+display(htl.html`<div class="controls-row">
+  <div class="controls-left">${focusYearEl}</div>
+  <div class="controls-right toggle-row">${historicalToggleEl}${medianToggleEl}${bandToggleEl}</div>
+</div>`);
 ```
 
 ```js
@@ -275,7 +285,7 @@ const chartPlot = resize((width) => Plot.plot({
   marginBottom: 45,
   style: {
     fontFamily: "IBM Plex Mono, monospace",
-    fontSize: "13px",
+    fontSize: "16px",
     background: "transparent",
   },
   x: {
@@ -289,12 +299,12 @@ const chartPlot = resize((width) => Plot.plot({
     label: null,
   },
   y: {
-    label: "Water temperature (°C)",
-    domain: [7, 22],
+    label: "Water temperature (°F)",
+    domain: [toF(7), toF(22)],
   },
   marks: [
     Plot.rectY([{}], {
-      x1: 0, x2: 365, y1: threshold, y2: 22,
+      x1: 0, x2: 365, y1: threshold, y2: toF(22),
       fill: "#B03823", fillOpacity: 0.07,
     }),
     ...(showBand ? [Plot.areaY(historicalData, {
@@ -308,20 +318,20 @@ const chartPlot = resize((width) => Plot.plot({
     Plot.ruleY([threshold], {
       stroke: "#B03823", strokeDasharray: "4 2", strokeWidth: 1.2,
     }),
-    ...(isHistoricalTab ? historicalYears.map(([year, rows]) =>
+    ...(showHistorical ? historicalYears.map(([year, rows]) =>
       Plot.line(rows, {
         x: "doy", y: "tmp",
         stroke: "#705C57", strokeWidth: 0.8, strokeOpacity: 0.35,
       })
     ) : []),
-    ...(isHistoricalTab ? [Plot.text(
+    ...(showHistorical ? [Plot.text(
       historicalYears.map(([year, rows]) => {
         const peak = rows.reduce((a, b) => b.tmp > a.tmp ? b : a);
-        return { doy: peak.doy, tmp: peak.tmp + 0.3, label: String(year) };
+        return { doy: peak.doy, tmp: peak.tmp + 0.5, label: String(year) };
       }),
-      { x: "doy", y: "tmp", text: "label", fontSize: 9, fill: "#57423E" }
+      { x: "doy", y: "tmp", text: "label", fontSize: 16, fill: "#57423E" }
     )] : []),
-    ...(!isHistoricalTab ? highlightedYearRows.map(([year, rows]) => {
+    ...highlightedYearRows.map(([year, rows]) => {
       const isFocus = focusYear === "All" || String(year) === focusYear;
       return Plot.line(rows, {
         x: "doy", y: "tmp",
@@ -330,8 +340,8 @@ const chartPlot = resize((width) => Plot.plot({
         strokeOpacity: isFocus ? 1 : 0.2,
         strokeDasharray: (yearColors[year]?.dash ?? []).join(" "),
       });
-    }) : []),
-    ...(!isHistoricalTab ? [Plot.text(
+    }),
+    ...[Plot.text(
       (() => {
         const peaks = highlightedYearRows
           .filter(([year]) => focusYear === "All" || String(year) === focusYear)
@@ -342,7 +352,7 @@ const chartPlot = resize((width) => Plot.plot({
           .sort((a, b) => a.doy - b.doy);
 
         // Nudge labels apart vertically when they're close in both x and y
-        const minGap = 0.7;
+        const minGap = 1.3;
         const xWindow = 25;
         for (let i = 1; i < peaks.length; i++) {
           for (let j = 0; j < i; j++) {
@@ -353,26 +363,26 @@ const chartPlot = resize((width) => Plot.plot({
           }
         }
 
-        return peaks.map(p => ({...p, tmp: p.tmp + 0.4}));
+        return peaks.map(p => ({...p, tmp: p.tmp + 0.7}));
       })(),
       {
-        x: "doy", y: "tmp", text: "label", fontSize: 12, fontWeight: 300,
+        x: "doy", y: "tmp", text: "label", fontSize: 16, fontWeight: 300,
         fill: d => yearColors[+d.label]?.color ?? "#2C0E09",
         stroke: "#FEECD8", strokeWidth: 3, paintOrder: "stroke",
       }
-    )] : []),
+    )],
     ...(focusYear === "All" || focusYear === String(currentYear) ? [Plot.dot(dataCurrent.slice(-1), {
   x: "doy", y: "tmp",
   r: 5, fill: "#F7941E", stroke: "#EDD7CC", strokeWidth: 1.5, /* Current Temperature Dot*/
 })] : []),
-    ...(!isHistoricalTab ? (() => {
+    ...(() => {
       const tipYear = focusYear === "All" ? currentYear : focusYear;
       const tipRows = highlightedYearRows.find(([year]) => String(year) === String(tipYear))?.[1];
       return tipRows ? [Plot.tip(tipRows, Plot.pointerX({
         x: "doy", y: "tmp",
-        title: d => `${tipYear} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°C`,
+        title: d => `${tipYear} — ${doyToMonthDay(d.doy)}\n${d.tmp.toFixed(1)}°F`,
       }))] : [];
-    })() : []),
+    })(),
   ],
 }));
 display(htl.html`<div class="chart-card">${chartPlot}</div>`);
@@ -409,7 +419,7 @@ const legendEl = htl.html`<div class="legend">
       <svg width="32" height="12">
         <line x1="0" y1="6" x2="32" y2="6" stroke="#B03823" stroke-width="1.5" stroke-dasharray="4,2"/>
       </svg>
-      <span>15.5°C threshold</span>
+      <span>${threshold.toFixed(1)}°F threshold</span>
     </div>
   </div>
 </div>`;
@@ -427,19 +437,18 @@ exportBtn.onclick = () => {
   const chartHeight = chartClone.viewBox.baseVal.height || chartClone.getBoundingClientRect().height;
 
 // Build legend entries matching what's currently visible
-const visibleYearEntries = isHistoricalTab
-  ? [] // historical tab doesn't show individual highlighted years
-  : Object.entries(yearColors)
-      .filter(([year]) => focusYear === "All" || String(year) === focusYear)
-      .map(([year, cfg]) => ({
-        label: String(year), color: cfg.color, dash: cfg.dash.length ? cfg.dash.join(",") : "none", type: "line",
-      }));
+const visibleYearEntries = Object.entries(yearColors)
+  .filter(([year]) => focusYear === "All" || String(year) === focusYear)
+  .map(([year, cfg]) => ({
+    label: String(year), color: cfg.color, dash: cfg.dash.length ? cfg.dash.join(",") : "none", type: "line",
+  }));
 
 const legendEntries = [
   ...visibleYearEntries,
+  ...(showHistorical ? [{ label: "Historical years", color: "#705C57", dash: "none", type: "line" }] : []),
   ...(showMedian ? [{ label: "Median", color: "#57423E", dash: "6,3", type: "line" }] : []),
   ...(showBand ? [{ label: "10th–90th pct", color: "#93A87B", type: "band" }] : []),
-  { label: "15.5°C threshold", color: "#B03823", dash: "4,2", type: "line" },
+  { label: `${threshold.toFixed(1)}°F threshold`, color: "#B03823", dash: "4,2", type: "line" },
 ];
 
   const itemWidth = 130;
@@ -455,7 +464,7 @@ const legendEntries = [
     const mark = entry.type === "band"
       ? `<rect x="${x}" y="${y - 4}" width="28" height="8" fill="${entry.color}" opacity="0.4" rx="2"/>`
       : `<line x1="${x}" y1="${y}" x2="${x + 28}" y2="${y}" stroke="${entry.color}" stroke-width="2.5" stroke-dasharray="${entry.dash}"/>`;
-    return `${mark}<text x="${x + 36}" y="${y + 4}" font-family="IBM Plex Mono, monospace" font-size="11" fill="#8C7A76">${entry.label}</text>`;
+    return `${mark}<text x="${x + 36}" y="${y + 4}" font-family="IBM Plex Mono, monospace" font-size="16" fill="#8C7A76">${entry.label}</text>`;
   }).join("");
 
   const totalHeight = chartHeight + legendHeight;
@@ -477,5 +486,5 @@ display(exportBtn);
 ```
 
 ```js
-display(htl.html`<p class="page-footer">Colorado River at River Mile 10 · Grand Canyon Trust monitoring project</p>`);
+display(htl.html`<p class="page-footer">USGS OBSERVATIONS • DIBBLE ET AL. (2020) FRAMEWORK</p>`);
 ```
