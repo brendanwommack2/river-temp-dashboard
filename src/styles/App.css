@@ -11,7 +11,7 @@
   --color-bg-card:        #FEECD8;  /* cream card background (stat cards, chart, table) */
   --color-bg-card-alt:    #FDE8D0;  /* slightly darker card shade (striped table rows) */
   --color-bg-hover:       #FDCD99;  /* table row hover */
-  --color-bg-hero:        #5591a6;  /* hero banner background */
+  --color-bg-hero:        #93b5c4;  /* hero banner background */
 
   /* Text */
   --color-text-dark:      #2C0E09;  /* darkest text (numbers, headings on light bg) */
@@ -87,7 +87,7 @@ body, .observablehq--root {
 
 /* ── Hero ── */
 .hero {
-  background: #5591a6;
+  background: #93b5c4;
   padding: 1.85rem 1.75rem 1.6rem;
   margin-bottom: 1.4rem;
   position: relative;
@@ -241,6 +241,11 @@ body, .observablehq--root {
   color: #000000d9;
 }
 
+/* Threshold card: cream background matching the threshold band in the chart */
+.stat-card--threshold {
+  background: #f9f1ef;
+}
+
 /* Threshold text explicitly set to IBM Plex Mono */
 .stat-card--threshold .stat-label,
 .stat-card--threshold .stat-value {
@@ -295,8 +300,8 @@ body, .observablehq--root {
   font-family: "Source Sans 3", sans-serif;
   font-size: 16px;
   letter-spacing: 0.02em;
-  color: #ffffff;
-  background: #9dbfcb;
+  color: var(--color-text-dark);
+  background: #c5b7b4;
   border: 1px solid #ffffff;
   border-radius: 5px;
   padding: 0.35rem 0.85rem;
@@ -336,7 +341,7 @@ body, .observablehq--root {
   cursor: pointer;
   font-family: var(--font-sans);
   font-size: 16px;
-  color: var(--color-text-muted);
+  color: #2C0E09;
   white-space: nowrap;
 }
 .toggle-track {
@@ -344,7 +349,7 @@ body, .observablehq--root {
   display: inline-block;
   width: 30px;
   height: 16px;
-  background: var(--color-border);
+  background: #c5b7b4;
   border-radius: var(--radius-pill);
   transition: background 0.15s ease;
   flex: none;
@@ -355,13 +360,12 @@ body, .observablehq--root {
   left: 2px;
   width: 12px;
   height: 12px;
-  background: var(--color-bg-card);
+  background: #2c0e09;
   border-radius: 50%;
   transition: transform 0.15s ease;
 }
-.toggle-on .toggle-track { background: var(--color-accent-olive); }
+.toggle-on .toggle-track { background: #B03823; }
 .toggle-on .toggle-thumb { transform: translateX(14px); }
-.toggle-on .toggle-label { color: var(--color-text-dark); }
 .toggle-label { letter-spacing: 0.01em; }
 
 .chart-card {
@@ -370,6 +374,15 @@ body, .observablehq--root {
   border-radius: var(--radius-card);
   padding: 0.75rem 0.25rem 0.5rem;
   margin-bottom: 0.5rem;
+}
+
+/* Historical line hover highlight */
+.hist-line {
+  transition: stroke-opacity 0.12s ease, stroke-width 0.12s ease;
+}
+.hist-line-active {
+  stroke-opacity: 0.9 !important;
+  stroke-width: 1.8px !important;
 }
 
 .legend { margin: 0.5rem 0 1rem; }
@@ -383,7 +396,7 @@ body, .observablehq--root {
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 16px;
   color: var(--color-text-faint);
 }

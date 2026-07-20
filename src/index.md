@@ -13,14 +13,14 @@ toc: false
 const currentYear = 2026;
 
 // Palette entries are paired with years oldest→newest (index 0 = 4 years
-// back, last index = currentYear). Colors/dashes were swapped per request:
-// 2026 <-> 2025, and 2022 <-> 2024.
+// back, last index = currentYear). All years now render as solid lines —
+// colors alone distinguish them.
 const yearPalette = [
-  {color: "#eda100", dash: []},     // 2022 (was 2024's color/dash)
-  {color: "#9085e9", dash: [4,2]},  // 2023 (unchanged)
-  {color: "#3987e5", dash: [6,2]},  // 2024 (was 2022's color/dash)
-  {color: "#1baf7a", dash: [8,3]},  // 2025 (was 2026's color/dash)
-  {color: "#e34948", dash: [2,2]},  // 2026 (was 2025's color/dash)
+  {color: "#eda100", dash: []},     // 2022
+  {color: "#9085e9", dash: []},     // 2023
+  {color: "#3987e5", dash: []},     // 2024
+  {color: "#1baf7a", dash: []},     // 2025
+  {color: "#e34948", dash: []},     // 2026
 ];
 ```
 
@@ -149,7 +149,7 @@ display(htl.html`<div class="hero">
     <div class="hero-left">
       <p class="hero-eyebrow">Colorado River Mile 10</p>
       <h1 class="hero-title">Smallmouth Bass Spawning Threshold and Daily Water Temperature</h1>
-      <p class="hero-sub">Monitoring conditions that support native fish over invasive smallmouth bass</p>
+      <p class="hero-sub"></p>
     </div>
     <div class="hero-right">
       <div class="hero-temp">${currentTemp?.toFixed(1)}<span class="hero-temp-unit">°F</span></div>
@@ -319,10 +319,21 @@ const chartPlot = resize((width) => Plot.plot({
     Plot.ruleY([threshold], {
       stroke: "#B03823", strokeDasharray: "4 2", strokeWidth: 1.2,
     }),
+    // Threshold value labeled neatly right above its dashed rule line
+    Plot.text([{}], {
+      x: 364, y: threshold,
+      text: () => `${threshold.toFixed(1)}°F`,
+      dy: -8,
+      textAnchor: "end",
+      fontSize: 13,
+      fontWeight: 500,
+      fill: "#B03823",
+    }),
     ...(showHistorical ? historicalYears.map(([year, rows]) =>
       Plot.line(rows, {
         x: "doy", y: "tmp",
         stroke: "#705C57", strokeWidth: 0.8, strokeOpacity: 0.35,
+        class: `hist-line hist-year-${year}`,
       })
     ) : []),
     ...(showHistorical ? [Plot.tip(
@@ -337,7 +348,7 @@ const chartPlot = resize((width) => Plot.plot({
       return Plot.line(rows, {
         x: "doy", y: "tmp",
         stroke: yearColors[year].color,
-        strokeWidth: isFocus ? 2.2 : 1.0,
+        strokeWidth: isFocus ? 3 : 1.0,
         strokeOpacity: isFocus ? 1 : 0.2,
         strokeDasharray: (yearColors[year]?.dash ?? []).join(" "),
       });
@@ -374,7 +385,7 @@ const chartPlot = resize((width) => Plot.plot({
     )] : []),
     ...(focusYear === "All" || focusYear === String(currentYear) ? [Plot.dot(dataCurrent.slice(-1), {
   x: "doy", y: "tmp",
-  r: 5, fill: "#F7941E", stroke: "#EDD7CC", strokeWidth: 1.5, /* Current Temperature Dot*/
+  r: 5, fill: "#2C0E09", stroke: "#ffffff", strokeWidth: 1, /* Current Temperature Dot*/
 })] : []),
     ...(focusYear ? (() => {
       const tipYear = focusYear === "All" ? currentYear : focusYear;
@@ -390,9 +401,42 @@ display(htl.html`<div class="chart-card">${chartPlot}</div>`);
 ```
 
 ```js
+// Hover-to-highlight for historical lines. Listens on the resize wrapper
+// (which persists across width changes) and re-queries the current <svg>
+// each time, so it keeps working even after a resize swaps the inner markup.
+if (showHistorical) {
+  const histRows = historicalYears.flatMap(([year, rows]) => rows.map(d => ({...d, year})));
+
+  chartPlot.addEventListener("pointermove", (event) => {
+    const svgEl = chartPlot.querySelector("svg");
+    const xScale = svgEl?.scale?.("x");
+    if (!svgEl || !xScale) return;
+
+    const [px] = d3.pointer(event, svgEl);
+    const doy = xScale.invert(px);
+
+    let nearest = null, nearestDist = Infinity;
+    for (const d of histRows) {
+      const dist = Math.abs(d.doy - doy);
+      if (dist < nearestDist) { nearestDist = dist; nearest = d; }
+    }
+
+    svgEl.querySelectorAll(".hist-line").forEach(el => el.classList.remove("hist-line-active"));
+    if (nearest && nearestDist < 6) {
+      svgEl.querySelectorAll(`.hist-year-${nearest.year}`).forEach(el => el.classList.add("hist-line-active"));
+    }
+  });
+
+  chartPlot.addEventListener("pointerleave", () => {
+    chartPlot.querySelectorAll(".hist-line").forEach(el => el.classList.remove("hist-line-active"));
+  });
+}
+```
+
+```js
 const legendEl = htl.html`<div class="legend">
   <div class="legend-items">
-    ${Object.entries(yearColors).map(([year, cfg]) => {
+    ${Object.entries(yearColors).sort((a, b) => b[0] - a[0]).map(([year, cfg]) => {
       const dashAttr = cfg.dash.length ? cfg.dash.join(",") : "none";
       return htl.html`<div class="legend-item">
         <svg width="32" height="12">
@@ -406,6 +450,12 @@ const legendEl = htl.html`<div class="legend">
     })}
     <div class="legend-item">
       <svg width="32" height="12">
+        <line x1="0" y1="6" x2="32" y2="6" stroke="#705C57" stroke-width="2.5"/>
+      </svg>
+      <span>Historical</span>
+    </div>
+    <div class="legend-item">
+      <svg width="32" height="12">
         <line x1="0" y1="6" x2="32" y2="6" stroke="#57423E" stroke-width="1.5" stroke-dasharray="6,3"/>
       </svg>
       <span>Median</span>
@@ -414,13 +464,13 @@ const legendEl = htl.html`<div class="legend">
       <svg width="32" height="12">
         <rect x="0" y="2" width="32" height="8" fill="#93A87B" opacity="0.4" rx="2"/>
       </svg>
-      <span>10th–90th pct</span>
+      <span>10th–90th percentile</span>
     </div>
     <div class="legend-item">
       <svg width="32" height="12">
         <line x1="0" y1="6" x2="32" y2="6" stroke="#B03823" stroke-width="1.5" stroke-dasharray="4,2"/>
       </svg>
-      <span>${threshold.toFixed(1)}°F threshold</span>
+      <span>${threshold.toFixed(1)}°F Threshold</span>
     </div>
   </div>
 </div>`;
@@ -440,6 +490,7 @@ exportBtn.onclick = () => {
 // Build legend entries matching what's currently visible
 const visibleYearEntries = focusYear
   ? Object.entries(yearColors)
+      .sort((a, b) => b[0] - a[0])
       .filter(([year]) => focusYear === "All" || String(year) === focusYear)
       .map(([year, cfg]) => ({
         label: String(year), color: cfg.color, dash: cfg.dash.length ? cfg.dash.join(",") : "none", type: "line",
@@ -450,8 +501,8 @@ const legendEntries = [
   ...visibleYearEntries,
   ...(showHistorical ? [{ label: "Historical years", color: "#705C57", dash: "none", type: "line" }] : []),
   ...(showMedian ? [{ label: "Median", color: "#57423E", dash: "6,3", type: "line" }] : []),
-  ...(showBand ? [{ label: "10th–90th pct", color: "#93A87B", type: "band" }] : []),
-  { label: `${threshold.toFixed(1)}°F threshold`, color: "#B03823", dash: "4,2", type: "line" },
+  ...(showBand ? [{ label: "10th–90th percentile", color: "#93A87B", type: "band" }] : []),
+  { label: `${threshold.toFixed(1)}°F Threshold`, color: "#B03823", dash: "4,2", type: "line" },
 ];
 
   const itemWidth = 130;
@@ -467,7 +518,7 @@ const legendEntries = [
     const mark = entry.type === "band"
       ? `<rect x="${x}" y="${y - 4}" width="28" height="8" fill="${entry.color}" opacity="0.4" rx="2"/>`
       : `<line x1="${x}" y1="${y}" x2="${x + 28}" y2="${y}" stroke="${entry.color}" stroke-width="2.5" stroke-dasharray="${entry.dash}"/>`;
-    return `${mark}<text x="${x + 36}" y="${y + 4}" font-family="IBM Plex Mono, monospace" font-size="16" fill="#8C7A76">${entry.label}</text>`;
+    return `${mark}<text x="${x + 36}" y="${y + 4}" font-family="Source Sans 3, sans-serif" font-size="16" fill="#8C7A76">${entry.label}</text>`;
   }).join("");
 
   const totalHeight = chartHeight + legendHeight;
